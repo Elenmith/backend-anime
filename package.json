@@ -31,7 +31,10 @@
     "react-scripts": "5.0.1",
     "react-slick": "^0.29.0",
     "slick-carousel": "^1.8.1",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "express": "^4.18.2",
+    "mongoose": "^6.11.4",
+    "cors": "^2.8.5"
   },
   "engines": {
     "node": "22.12.0",
