@@ -59,7 +59,7 @@ async function filterAnimeByCategory(category) {
     return null;
   }
 }
-}
+
 
 // Endpoint: Pobierz anime dla kategorii
 router.get("/:genre", async (req, res) => {
