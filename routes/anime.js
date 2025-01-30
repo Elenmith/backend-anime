@@ -120,8 +120,7 @@ router.get("/:genre", async (req, res) => {
     console.log(`🔍 Otrzymano zapytanie dla kategorii: ${genre}`);
 
     // Pobierz anime pasujące do kategorii
-    const animeList = await Anime.find({
-      genres: { $regex: new RegExp(`^${genre}$`, "i") } // Obsługuje wielkość liter
+    const animeList = await Anime.find({ genres: genre});
     });
 
     console.log(`✅ Znaleziono ${animeList.length} anime dla kategorii '${genre}'`);
