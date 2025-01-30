@@ -40,7 +40,6 @@ async function filterAnimeByCategory(category) {
   try {
     const categoryFormatted = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
 
-    // Sprawdzenie, czy kategoria istnieje w tablicy
     if (!categories.includes(categoryFormatted)) {
       console.log(`❌ Kategoria '${categoryFormatted}' nie istnieje`);
       return null;
@@ -48,8 +47,10 @@ async function filterAnimeByCategory(category) {
 
     console.log(`🔍 Szukam anime w kategorii: ${categoryFormatted}`);
 
-    // Szukaj w MongoDB wartości w "genres"
-    const animeList = await Anime.find({ genres: { $regex: new RegExp(`^${categoryFormatted}$`, "i") } });
+    // Pobiera anime, które mają daną kategorię w tablicy `genres`
+    const animeList = await Anime.find({
+      genres: { $in: [categoryFormatted] } // Szuka wartości w tablicy genres
+    });
 
     console.log(`✅ Znaleziono ${animeList.length} anime dla kategorii '${categoryFormatted}'`);
     return animeList;
@@ -57,6 +58,7 @@ async function filterAnimeByCategory(category) {
     console.error("❌ Błąd w filterAnimeByCategory:", error);
     return null;
   }
+}
 }
 
 // Endpoint: Pobierz anime dla kategorii
