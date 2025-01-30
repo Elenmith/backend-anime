@@ -119,15 +119,24 @@ router.get("/:genre", async (req, res) => {
     const genre = req.params.genre.toLowerCase();
     console.log(`🔍 Otrzymano zapytanie dla kategorii: ${genre}`);
 
-    const animeList = await Anime.find({ genres: genre });
-    res.json(animeList);
-    if (!animeList.length) {
+    // Pobierz anime pasujące do kategorii
+    const animeList = await Anime.find({
+      genres: { $regex: new RegExp(`^${genre}$`, "i") } // Obsługuje wielkość liter
+    });
+
+    console.log(`✅ Znaleziono ${animeList.length} anime dla kategorii '${genre}'`);
+
+    // Jeśli nie ma wyników, zwróć 404
+    if (animeList.length === 0) {
       console.log(`⚠️ Brak wyników dla '${genre}'`);
       return res.status(404).json({ message: `No anime found for genre: ${genre}` });
     }
-    res.status(200).json(listAnime);
+
+    // Zwróć znalezione anime
+    res.status(200).json(animeList);
   } catch (err) {
-    res.status(500).json({ error: "Błąd podczas pobierania anime" });
+    console.error("❌ Błąd podczas pobierania anime:", err);
+    res.status(500).json({ error: "Błąd podczas pobierania anime", details: err.toString() });
   }
 });
 
