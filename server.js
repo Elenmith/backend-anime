@@ -23,8 +23,8 @@ app.use("/api/categories", categoriesRouter);
 
 // MongoDB URI (upewnij się, że dane logowania są poprawne)
 const mongoURI =
-  process.env.MONGO_URI ||
-  "mongodb+srv://admin:ZaEpU6JjfWVoRaQk@animemood.hezaf.mongodb.net/?retryWrites=true&w=majority&appName=AnimeMood";
+  process.env.MONGO_URI;
+  
 
 // Połączenie z MongoDB
 mongoose
