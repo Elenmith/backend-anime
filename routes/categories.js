@@ -8,18 +8,23 @@ router.get("/:genre", async (req, res) => {
     const { genre } = req.params;
     console.log(`Received request for genre: ${genre}`);
 
-    // Szukanie w tablicy `genres` (dopasowanie ignorujące wielkość liter)
-    const animeList = await Anime.find({
-      genres: { $regex: new RegExp(`^${genre}$`, "i") }, // 'i' - ignorowanie wielkości liter
-    });
+    // Sprawdź, jakie dane są w bazie
+    const animeList = await Anime.find();
+    console.log("All anime in DB:", animeList);
 
-    if (!animeList.length) {
+    // Sprawdź, co dokładnie zwraca zapytanie
+    const matchedAnime = await Anime.find({
+      genres: { $regex: new RegExp(genre, "i") },
+    });
+    console.log("Matching anime:", matchedAnime);
+
+    if (!matchedAnime.length) {
       return res
         .status(404)
         .json({ message: `No anime found for genre: ${genre}` });
     }
 
-    res.status(200).json(animeList);
+    res.status(200).json(matchedAnime);
   } catch (error) {
     console.error("Error fetching anime by genre:", error);
     res.status(500).json({ message: "Server error" });
