@@ -1,38 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const Anime = require("../models/Anime"); 
 
 // Lista kategorii (statyczna)
 const categories = [
-  "action",
-  "adventure",
-  "comedy",
-  "drama",
-  "fantasy",
-  "sci-Fi",
-  "slice of Life",
-  "sports",
-  "mystery",
-  "romance",
-  "thriller",
-  "supernatural",
-  "horror",
-  "historical",
-  "music",
-  "military",
-  "parody",
-  "psychological",
-  "martial Arts",
-  "mecha",
-  "shounen",
-  "seinen",
-  "josei",
-  "shoujo",
-  "kids",
+  "Action", "Adventure", "Comedy", "Drama", "Fantasy", "Sci-Fi",
+  "Slice of Life", "Sports", "Mystery", "Romance", "Thriller",
+  "Supernatural", "Horror", "Historical", "Music", "Military",
+  "Parody", "Psychological", "Martial Arts", "Mecha", "Shounen",
+  "Seinen", "Josei", "Shoujo", "Kids"
 ];
 
-
 /**
- * Funkcja sprawdzająca, czy kategoria istnieje i filtrująca anime.
+ * Wyszukuje anime w MongoDB na podstawie kategorii
  * @param {string} category - Nazwa kategorii z URL
  * @returns {Promise<Array>} - Tablica anime pasujących do kategorii
  */
@@ -47,10 +27,8 @@ async function filterAnimeByCategory(category) {
 
     console.log(`🔍 Szukam anime w kategorii: ${categoryFormatted}`);
 
-    // Pobiera anime, które mają daną kategorię w tablicy `genres`
-    const animeList = await Anime.find({
-      genres: { $in: [categoryFormatted] } // Szuka wartości w tablicy genres
-    });
+    // Pobierz anime, które mają daną kategorię w tablicy `genres`
+    const animeList = await Anime.find({ genres: { $in: [categoryFormatted] } });
 
     console.log(`✅ Znaleziono ${animeList.length} anime dla kategorii '${categoryFormatted}'`);
     return animeList;
@@ -59,7 +37,6 @@ async function filterAnimeByCategory(category) {
     return null;
   }
 }
-
 
 // Endpoint: Pobierz anime dla kategorii
 router.get("/:genre", async (req, res) => {
@@ -79,6 +56,7 @@ router.get("/:genre", async (req, res) => {
     res.status(500).json({ error: "Błąd serwera", details: err.toString() });
   }
 });
+
 
 
 // Endpoint: Pobierz listę kategorii
