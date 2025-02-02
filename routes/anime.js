@@ -7,7 +7,7 @@ const FeaturedAnime = require("../models/FeaturedAnime");
 router.get("/moods/:mood", async (req, res) => {
   try {
     const mood = req.params.mood.toLowerCase();
-    const animeList = await Anime.find({ moods: mood });
+    const animeList = await Anime.find({ moods: mood }).sort({ rating: -1 });
     res.json(animeList);
   } catch (err) {
     res.status(500).json({ error: "Błąd podczas pobierania anime" });
