@@ -24,19 +24,6 @@ router.get("/posters", async (req, res) => {
   }
 });
 
-// Pobierz szczegóły anime na podstawie ID
-// router.get("/:id", async (req, res) => {
-//   try {
-//     const anime = await Anime.findById(req.params.id); // Znajdź anime po ID
-//     if (!anime) {
-//       return res.status(404).json({ error: "Anime not found" });
-//     }
-//     res.json(anime);
-//   } catch (err) {
-//     res.status(500).json({ error: "Błąd podczas pobierania szczegółów anime" });
-//   }
-// });
-
 router.get("/:id", async (req, res) => {
   try {
     const animeId = req.params.id;
