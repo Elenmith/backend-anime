@@ -66,14 +66,14 @@ router.get("/featured", async (req, res) => {
 });
 
 // Pobiera anime na podstawie kategorii
-router.get("/genre/:genre", async (req, res) => {
-  try {
-    const genre = req.params.genre.toLowerCase();
-    const animeList = await Anime.find({ genres: genre });
-  } catch (err) {
-    res.status(500).json({ error: "Error fetching featured anime" });
-  }
-});
+// router.get("/genre/:genre", async (req, res) => {
+//   try {
+//     const genre = req.params.genre.toLowerCase();
+//     const animeList = await Anime.find({ genres: genre });
+//   } catch (err) {
+//     res.status(500).json({ error: "Error fetching featured anime" });
+//   }
+// });
 
 router.get("/:id", async (req, res) => {
   try {
