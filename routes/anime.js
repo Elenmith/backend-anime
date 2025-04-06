@@ -3,10 +3,6 @@ const router = express.Router();
 const Anime = require("../models/Anime");
 const FeaturedAnime = require("../models/FeaturedAnime");
 
-router.get("/", (req, res) => {
-  res.json({ message: "✅ Anime API is working" });
-});
-
 router.get("/search", async (req, res) => {
   const { title } = req.query;
 
