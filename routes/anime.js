@@ -61,7 +61,7 @@ router.get("/featured", async (req, res) => {
   }
 });
 
-Pobiera anime na podstawie kategorii
+
 router.get("/genre/:genre", async (req, res) => {
   try {
     const genre = req.params.genre.toLowerCase();
