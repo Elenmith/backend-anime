@@ -3,29 +3,29 @@ const router = express.Router();
 const Anime = require("../models/Anime");
 const FeaturedAnime = require("../models/FeaturedAnime");
 
-// router.get("/search", async (req, res) => {
-//   const { title } = req.query;
+router.get("/search", async (req, res) => {
+  const { title } = req.query;
 
-//   if (!title || title.trim() === "") {
-//     return res.status(400).json({ error: "Missing title parameter" });
-//   }
+  if (!title || title.trim() === "") {
+    return res.status(400).json({ error: "Missing title parameter" });
+  }
 
-//   try {
-//     console.log("🔥 Wyszukiwanie anime o tytule:", title);
+  try {
+    console.log("🔥 Wyszukiwanie anime o tytule:", title);
 
-//     const regex = new RegExp(title, "i");
-//     const results = await Anime.find({ title: regex }).limit(10);
+    const regex = new RegExp(title, "i");
+    const results = await Anime.find({ title: regex }).limit(10);
 
-//     if (!results || results.length === 0) {
-//       return res.status(404).json({ error: "No anime found" });
-//     }
+    if (!results || results.length === 0) {
+      return res.status(404).json({ error: "No anime found" });
+    }
 
-//     res.json(results);
-//   } catch (err) {
-//     console.error("❌ Błąd w /search:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Błąd w /search:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Pobierz anime dla danego nastroju
 router.get("/moods/:mood", async (req, res) => {
@@ -44,7 +44,7 @@ router.get("/posters", async (req, res) => {
     const posters = await Anime.find({}, "_id title imageUrl"); // Pobieramy tylko potrzebne pola
     res.json(posters);
   } catch (err) {
-    res.status(500).json({ error: "Error fetching anime posters });
+    res.status(500).json({ error: "Error fetching anime posters" });
   }
 });
 
@@ -61,15 +61,15 @@ router.get("/featured", async (req, res) => {
   }
 });
 
-// Pobiera anime na podstawie kategorii
-// router.get("/genre/:genre", async (req, res) => {
-//   try {
-//     const genre = req.params.genre.toLowerCase();
-//     const animeList = await Anime.find({ genres: genre });
-//   } catch (err) {
-//     res.status(500).json({ error: "Error fetching featured anime" });
-//   }
-// });
+Pobiera anime na podstawie kategorii
+router.get("/genre/:genre", async (req, res) => {
+  try {
+    const genre = req.params.genre.toLowerCase();
+    const animeList = await Anime.find({ genres: genre });
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching featured anime" });
+  }
+});
 
 router.get("/:id", async (req, res) => {
   try {
