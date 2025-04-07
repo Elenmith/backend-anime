@@ -71,9 +71,23 @@ router.get("/genre/:genre", async (req, res) => {
 router.get("/moods/:mood", async (req, res) => {
   try {
     const mood = req.params.mood.toLowerCase();
-    const animeList = await Anime.find({ moods: mood }).sort({ rating: -1 });
-    res.json(animeList);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const skip = (page - 1) * limit;
+
+    const totalCount = await Anime.countDocuments({ moods: mood });
+    const animeList = await Anime.find({ moods: mood })
+      .sort({ rating: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      anime: animeList,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    });
   } catch (err) {
+    console.error("❌ Błąd przy paginacji /moods:", err.message);
     res.status(500).json({ error: "Błąd podczas pobierania anime" });
   }
 });
