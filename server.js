@@ -7,43 +7,53 @@ const moodsRouter = require("./routes/moods");
 const animeRouter = require("./routes/anime");
 const featuredAnimeRouter = require("./routes/featuredAnime");
 const categoriesRouter = require("./routes/categories");
-
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
+const helmet = require("helmet");
+const xss = require("xss-clean");
+const rateLimit = require("express-rate-limit");
+
+app.use(helmet());
+app.use(xss());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many IP requests, please try again later",
+});
+app.use(limiter);
+
 app.use(cors());
 app.use(express.json());
 
-// Routes
+const PORT = process.env.PORT || 5000;
+
+const mongoURI = process.env.MONGODB_URI;
+mongoose
+  .connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Połączono z MongoDB!");
+  })
+  .catch((err) => {
+    console.error("Błąd połączenia z MongoDB:", err.message);
+    process.exit(1);
+  });
+
 app.use("/api/moods", moodsRouter);
 app.use("/api/anime", animeRouter);
 app.use("/api/featured-anime", featuredAnimeRouter);
 app.use("/api/categories", categoriesRouter);
 
-const mongoURI = process.env.MONGODB_URI;
 
-// Połączenie z MongoDB
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log("✅ Połączono z MongoDB!");
-})
-.catch((err) => {
-  console.error("❌ Błąd połączenia z MongoDB:", err.message);
-  process.exit(1); // Zakończ proces jeśli nie udało się połączyć
-});
-
-// Testowa trasa
 app.get("/", (req, res) => {
   res.send("Backend działa!");
 });
 
-// CRUD dla Anime
 app.post("/anime", async (req, res) => {
   try {
     const newAnime = new Anime(req.body);
@@ -68,9 +78,7 @@ app.put("/anime/:id", async (req, res) => {
     const updatedAnime = await Anime.findByIdAndUpdate(
       req.params.id,
       req.body,
-      {
-        new: true,
-      }
+      { new: true }
     );
     res.status(200).json(updatedAnime);
   } catch (err) {
@@ -87,7 +95,6 @@ app.delete("/anime/:id", async (req, res) => {
   }
 });
 
-// Obsługa statycznych plików tylko jeśli frontend jest w tym samym repozytorium
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "build")));
 
@@ -96,18 +103,17 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Globalna obsługa błędów
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Coś poszło nie tak!");
 });
 
-// Obsługa nieznalezionych tras
 app.use((req, res) => {
   res.status(404).send("Endpoint not found");
 });
 
-// Start serwera
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
