@@ -24,13 +24,17 @@ app.use("/api/categories", categoriesRouter);
 const mongoURI = process.env.MONGODB_URI;
 
 // Połączenie z MongoDB
-mongoose
-  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Połączono z MongoDB!"))
-  .catch((err) => {
-    console.error("Błąd połączenia z MongoDB:", err.message);
-    process.exit(1); // Zakończ proces, jeśli połączenie się nie powiedzie
-  });
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log("✅ Połączono z MongoDB!");
+})
+.catch((err) => {
+  console.error("❌ Błąd połączenia z MongoDB:", err.message);
+  process.exit(1); // Zakończ proces jeśli nie udało się połączyć
+});
 
 // Testowa trasa
 app.get("/", (req, res) => {
