@@ -31,17 +31,6 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// Pobierz anime dla danego nastroju
-router.get("/moods/:mood", async (req, res) => {
-  try {
-    const mood = req.params.mood.toLowerCase();
-    const animeList = await Anime.find({ moods: mood }).sort({ rating: -1 });
-    res.json(animeList);
-  } catch (err) {
-    res.status(500).json({ error: "Błąd podczas pobierania anime" });
-  }
-});
-
 // Pobierz wszystkie plakaty anime
 router.get("/posters", async (req, res) => {
   try {
@@ -70,6 +59,17 @@ router.get("/genre/:genre", async (req, res) => {
   try {
     const genre = req.params.genre.toLowerCase();
     const animeList = await Anime.find({ genres: genre });
+  } catch (err) {
+    res.status(500).json({ error: "Błąd podczas pobierania anime" });
+  }
+});
+
+// Pobierz anime dla danego nastroju
+router.get("/moods/:mood", async (req, res) => {
+  try {
+    const mood = req.params.mood.toLowerCase();
+    const animeList = await Anime.find({ moods: mood }).sort({ rating: -1 });
+    res.json(animeList);
   } catch (err) {
     res.status(500).json({ error: "Błąd podczas pobierania anime" });
   }
