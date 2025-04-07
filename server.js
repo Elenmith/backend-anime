@@ -21,10 +21,7 @@ app.use("/api/anime", animeRouter);
 app.use("/api/featured-anime", featuredAnimeRouter);
 app.use("/api/categories", categoriesRouter);
 
-// MongoDB URI (upewnij się, że dane logowania są poprawne)
-const mongoURI =
-  process.env.MONGO_URI;
-  
+const mongoURI = process.env.MONGODB_URI;
 
 // Połączenie z MongoDB
 mongoose
