@@ -3,10 +3,12 @@ const router = express.Router();
 const Anime = require("../models/Anime");
 const FeaturedAnime = require("../models/FeaturedAnime");
 
+// Prosty testowy endpoint
 router.get("/", (req, res) => {
   res.json({ message: "✅ Anime API is working" });
 });
 
+// Wyszukiwanie anime po tytule
 router.get("/search", async (req, res) => {
   const { title } = req.query;
 
@@ -31,20 +33,20 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// Pobierz wszystkie plakaty anime
+// Pobierz plakaty
 router.get("/posters", async (req, res) => {
   try {
-    const posters = await Anime.find({}, "_id title imageUrl"); // Pobieramy tylko potrzebne pola
+    const posters = await Anime.find({}, "_id title imageUrl");
     res.json(posters);
   } catch (err) {
-    res.status(500).json({ error: "Błąd podczas pobierania plakatów" });
+    res.status(500).json({ error: "Error fetching anime posters" });
   }
 });
 
-// Pobierz "anime dnia"
+// Pobierz anime dnia
 router.get("/featured", async (req, res) => {
   try {
-    const featured = await FeaturedAnime.findOne({}).populate("anime"); // Pobierz szczegóły anime
+    const featured = await FeaturedAnime.findOne({}).populate("anime");
     if (!featured) {
       return res.status(404).json({ error: "No featured anime found" });
     }
@@ -54,17 +56,18 @@ router.get("/featured", async (req, res) => {
   }
 });
 
-// Pobiera anime na podstawie kategorii
+// Anime wg kategorii
 router.get("/genre/:genre", async (req, res) => {
   try {
     const genre = req.params.genre.toLowerCase();
     const animeList = await Anime.find({ genres: genre });
+    res.json(animeList);
   } catch (err) {
     res.status(500).json({ error: "Błąd podczas pobierania anime" });
   }
 });
 
-// Pobierz anime dla danego nastroju
+// Anime wg nastroju
 router.get("/moods/:mood", async (req, res) => {
   try {
     const mood = req.params.mood.toLowerCase();
@@ -75,29 +78,29 @@ router.get("/moods/:mood", async (req, res) => {
   }
 });
 
+// Szczegóły anime po ID
 router.get("/:id", async (req, res) => {
   try {
     const animeId = req.params.id;
-    const anime = await Anime.findById(animeId); // Znajdź anime w bazie danych
+    const anime = await Anime.findById(animeId);
 
     if (!anime) {
       return res.status(404).json({ error: "Anime not found" });
     }
 
-    // Zwróć szczegółowe informacje
     res.json({
       title: anime.title,
       imageUrl: anime.imageUrl,
       rating: anime.rating,
-      duration: anime.duration, // Czas trwania
-      releaseDate: anime.releaseDate, // Data powstania
-      director: anime.director, // Reżyser
-      characters: anime.characters, // Główne postacie
-      voiceCast: anime.voiceCast, // Voice cast
-      streamingPlatforms: anime.streamingPlatforms, // Gdzie obejrzeć
-      genres: anime.genres, // Gatunki
-      moods: anime.moods, // Nastroje
-      gallery: anime.gallery, // Galeria zdjęć
+      duration: anime.duration,
+      releaseDate: anime.releaseDate,
+      director: anime.director,
+      characters: anime.characters,
+      voiceCast: anime.voiceCast,
+      streamingPlatforms: anime.streamingPlatforms,
+      genres: anime.genres,
+      moods: anime.moods,
+      gallery: anime.gallery,
       description: anime.synopsis,
     });
   } catch (err) {
@@ -105,6 +108,5 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Error fetching anime details" });
   }
 });
-
 
 module.exports = router;
