@@ -105,6 +105,6 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Error fetching anime details" });
   }
 });
-y;
+
 
 module.exports = router;
