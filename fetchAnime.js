@@ -4,22 +4,22 @@ const Anime = require("./models/Anime");
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 require("dotenv").config();
-mongoose.set("strictQuery", false); 
+mongoose.set("strictQuery", false);
 
 mongoose
-  .connect(process.env.MONGO_URI, {
+  .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000, 
+    socketTimeoutMS: 45000,
   })
   .then(() => console.log("✅ Połączono z MongoDB"))
   .catch((err) => {
     console.error("❌ Błąd połączenia:", err);
-    process.exit(1); 
+    process.exit(1);
   });
 
-const fetchAnimeData = async (limit = 1000, startPage = 61) => {
+const fetchAnimeData = async (limit = 1000, startPage = 1105) => {
   try {
     let page = startPage;
     let totalFetched = 0;
@@ -39,7 +39,12 @@ const fetchAnimeData = async (limit = 1000, startPage = 61) => {
       }
 
       for (const anime of animeList) {
-        // Dodajemy tylko nowe anime
+        const exists = await Anime.findOne({ title: anime.title });
+        if (exists) {
+          console.log(`⏩ Pomijam (istnieje): ${anime.title}`);
+          continue;
+        }
+
         const newAnime = new Anime({
           title: anime.title,
           genres: anime.genres.map((g) => g.name),
@@ -49,7 +54,7 @@ const fetchAnimeData = async (limit = 1000, startPage = 61) => {
           releaseDate: anime.aired?.string || "Unknown",
           synopsis: anime.synopsis || "No synopsis available",
           moods: [],
-          page: page, 
+          page: page,
         });
 
         await newAnime.save();
