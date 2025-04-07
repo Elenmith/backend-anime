@@ -9,11 +9,27 @@ const featuredAnimeRouter = require("./routes/featuredAnime");
 const categoriesRouter = require("./routes/categories");
 
 const app = express();
+
+const helmet = require("helmet");
+const xss = require("xss-clean");
+const rateLimit = require("express-rate-limit");
+
+
+app.use(helmet());
+app.use(xss());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100, 
+  message: "Too many IP requests, please try again later",
+});
+app.use(limiter);
+
 const PORT = process.env.PORT || 5000;
 
 require("dotenv").config();
 
-// Middleware
+
 app.use(cors());
 app.use(express.json());
 
@@ -22,9 +38,6 @@ app.use("/api/moods", moodsRouter);
 app.use("/api/anime", animeRouter);
 app.use("/api/featured-anime", featuredAnimeRouter);
 app.use("/api/categories", categoriesRouter);
-
-// MongoDB URI (upewnij się, że dane logowania są poprawne)
-const mongoURI = process.env.MONGO_URI;
 
 // Połączenie z MongoDB
 const uri = process.env.MONGODB_URI;
