@@ -114,6 +114,39 @@ router.get("/featured", async (req, res) => {
   }
 });
 
+// Nowy endpoint dla zróżnicowanej karuzeli
+router.get("/random-categories", async (req, res) => {
+  try {
+    const categories = [
+      "Action", "Adventure", "Comedy", "Drama", 
+      "Fantasy", "Sci-Fi", "Romance", "Mystery"
+    ];
+    
+    const randomAnime = [];
+    
+    // Pobierz po 6-8 anime z każdej kategorii
+    for (const category of categories) {
+      const animeInCategory = await Anime.find({
+        genres: { $regex: new RegExp(`^${category}$`, "i") }
+      }).limit(8);
+      
+      // Dodaj losowe anime z tej kategorii
+      const shuffled = animeInCategory.sort(() => Math.random() - 0.5);
+      randomAnime.push(...shuffled.slice(0, 6));
+    }
+    
+    // Przetasuj całą listę i zwróć maksymalnie 50 anime
+    const finalList = randomAnime
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 50);
+    
+    res.json(finalList);
+  } catch (err) {
+    console.error("❌ Błąd w /random-categories:", err);
+    res.status(500).json({ error: "Błąd podczas pobierania zróżnicowanych anime" });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const animeId = req.params.id;
