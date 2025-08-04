@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const FeaturedAnime = require("../models/FeaturedAnime");
 const Anime = require("../models/Anime");
+const { setFeaturedAnime } = require("../scheduler");
 
 // Pobierz "anime dnia"
 router.get("/", async (req, res) => {
@@ -13,6 +14,23 @@ router.get("/", async (req, res) => {
     res.json(featured.anime);
   } catch (err) {
     res.status(500).json({ error: "Error fetching featured anime" });
+  }
+});
+
+// Ręczne uruchomienie skryptu zmiany anime dnia (tylko dla admina)
+router.post("/update", async (req, res) => {
+  try {
+    // Sprawdź czy to jest request z Heroku (dodaj lepsze zabezpieczenia w przyszłości)
+    const userAgent = req.get('User-Agent');
+    if (!userAgent || !userAgent.includes('Heroku')) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    await setFeaturedAnime();
+    res.json({ message: "Featured anime updated successfully" });
+  } catch (err) {
+    console.error("Error in manual update:", err);
+    res.status(500).json({ error: "Error updating featured anime" });
   }
 });
 

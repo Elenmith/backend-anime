@@ -7,6 +7,7 @@ const moodsRouter = require("./routes/moods");
 const animeRouter = require("./routes/anime");
 const featuredAnimeRouter = require("./routes/featuredAnime");
 const categoriesRouter = require("./routes/categories");
+const { initScheduler } = require("./scheduler");
 require("dotenv").config();
 
 const app = express();
@@ -38,6 +39,8 @@ mongoose
   })
   .then(() => {
     console.log("Połączono z MongoDB!");
+    // Inicjalizuj scheduler po połączeniu z bazą danych
+    initScheduler();
   })
   .catch((err) => {
     console.error("Błąd połączenia z MongoDB:", err.message);
