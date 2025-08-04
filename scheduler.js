@@ -39,19 +39,10 @@ const setFeaturedAnime = async () => {
   }
 };
 
-// Funkcja do inicjalizacji schedulera
-const initScheduler = () => {
-  // Uruchom codziennie o 00:00 (północ)
-  cron.schedule('0 0 * * *', async () => {
-    console.log("⏰ Daily cron job triggered - updating featured anime");
-    await setFeaturedAnime();
-  }, {
-    timezone: "Europe/Warsaw" // Ustawienie strefy czasowej dla Polski
-  });
-
-  // Uruchom też przy starcie serwera (opcjonalnie)
-  cron.schedule('0 0 * * *', async () => {
-    console.log("🚀 Server startup - checking featured anime");
+// Funkcja do sprawdzenia czy istnieje featured anime
+const checkAndSetFeaturedAnime = async () => {
+  try {
+    console.log("🚀 Checking if featured anime exists...");
     const existingFeatured = await FeaturedAnime.findOne({});
     if (!existingFeatured) {
       console.log("📝 No featured anime found, setting one...");
@@ -59,11 +50,25 @@ const initScheduler = () => {
     } else {
       console.log("✅ Featured anime already exists:", existingFeatured.date);
     }
+  } catch (err) {
+    console.error("❌ Error checking featured anime:", err);
+  }
+};
+
+// Funkcja do inicjalizacji schedulera
+const initScheduler = () => {
+  // Sprawdź i ustaw featured anime przy starcie serwera
+  checkAndSetFeaturedAnime();
+
+  // Uruchom codziennie o 00:00 (północ) - polski czas
+  cron.schedule('0 0 * * *', async () => {
+    console.log("⏰ Daily cron job triggered - updating featured anime");
+    await setFeaturedAnime();
   }, {
     timezone: "Europe/Warsaw"
   });
 
-  console.log("📅 Scheduler initialized - featured anime will update daily at 00:00");
+  console.log("📅 Scheduler initialized - featured anime will update daily at 00:00 (Warsaw time)");
 };
 
-module.exports = { initScheduler, setFeaturedAnime }; 
+module.exports = { initScheduler, setFeaturedAnime, checkAndSetFeaturedAnime }; 
