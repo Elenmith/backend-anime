@@ -9,14 +9,16 @@ const setFeaturedAnime = async () => {
   try {
     console.log("🔄 Starting daily featured anime update...");
     
-    const animeCount = await Anime.countDocuments({ rating: { $gt: 8.5 } });
-    if (animeCount === 0) {
+    // Użyj nowej static method
+    const highRatedAnime = await Anime.findHighRated(8.5);
+    
+    if (!highRatedAnime || highRatedAnime.length === 0) {
       console.log("❌ No high-rated anime found");
       return;
     }
 
-    const randomIndex = Math.floor(Math.random() * animeCount);
-    const randomAnime = await Anime.findOne({ rating: { $gt: 8.5 } }).skip(randomIndex);
+    const randomIndex = Math.floor(Math.random() * highRatedAnime.length);
+    const randomAnime = highRatedAnime[randomIndex];
 
     if (!randomAnime) {
       console.log("❌ Failed to find random anime");

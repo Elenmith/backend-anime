@@ -2,32 +2,76 @@ const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const compression = require("compression");
 const Anime = require("./models/Anime");
 const moodsRouter = require("./routes/moods");
 const animeRouter = require("./routes/anime");
 const featuredAnimeRouter = require("./routes/featuredAnime");
 const categoriesRouter = require("./routes/categories");
 const { initScheduler } = require("./scheduler");
+const { sanitizeInput } = require("./middleware/validation");
 require("dotenv").config();
 
 const app = express();
 
+// Security middleware
 const helmet = require("helmet");
 const xss = require("xss-clean");
 const rateLimit = require("express-rate-limit");
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
+
 app.use(xss());
 
+// Compression middleware
+app.use(compression());
+
+// Enhanced rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many IP requests, please try again later",
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later.",
+    retryAfter: "15 minutes"
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for health checks
+    return req.path === '/health';
+  }
 });
+
 app.use(limiter);
 
-app.use(cors());
-app.use(express.json());
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'https://mood4anime.com',
+    'https://www.mood4anime.com',
+    'http://localhost:3000',
+    'http://localhost:3001'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization
+app.use(sanitizeInput);
 
 const PORT = process.env.PORT || 5000;
 
@@ -47,11 +91,20 @@ mongoose
     process.exit(1);
   });
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 app.use("/api/moods", moodsRouter);
 app.use("/api/anime", animeRouter);
 app.use("/api/featured-anime", featuredAnimeRouter);
 app.use("/api/categories", categoriesRouter);
-
 
 app.get("/", (req, res) => {
   res.send("Backend działa!");
@@ -106,17 +159,31 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send("Coś poszło nie tak!");
+  
+  // Don't leak error details in production
+  const errorMessage = process.env.NODE_ENV === 'production' 
+    ? 'Something went wrong!' 
+    : err.message;
+    
+  res.status(500).json({ 
+    error: errorMessage,
+    timestamp: new Date().toISOString()
+  });
 });
 
+// 404 handler
 app.use((req, res) => {
-  res.status(404).send("Endpoint not found");
+  res.status(404).json({ 
+    error: "Endpoint not found",
+    path: req.path,
+    method: req.method
+  });
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
