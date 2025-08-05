@@ -110,6 +110,10 @@ app.get("/", (req, res) => {
   res.send("Backend działa!");
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK", message: "Backend is running" });
+});
+
 app.post("/anime", async (req, res) => {
   try {
     const newAnime = new Anime(req.body);
