@@ -9,6 +9,7 @@ const {
   validateGenreFilter, 
   validateAnimeId 
 } = require("../middleware/validation");
+const axios = require("axios"); // Added axios for MAL API
 
 router.get("/", (req, res) => {
   res.json({ message: "✅ Anime API is working" });
@@ -307,6 +308,60 @@ router.post("/clear-characters", async (req, res) => {
     console.error("❌ Błąd podczas czyszczenia:", error);
     res.status(500).json({ 
       error: "Błąd podczas czyszczenia danych",
+      details: error.message 
+    });
+  }
+});
+
+// Test endpoint for MAL ID and characters
+router.get("/test-mal/:title", async (req, res) => {
+  try {
+    const title = req.params.title;
+    console.log(`🧪 Testuję MAL ID dla: "${title}"`);
+    
+    // Znajdź MAL ID
+    const searchResponse = await axios.get(
+      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`
+    );
+    
+    if (!searchResponse.data.data || searchResponse.data.data.length === 0) {
+      return res.json({ error: "Nie znaleziono anime" });
+    }
+    
+    const malId = searchResponse.data.data[0].mal_id;
+    console.log(`✅ MAL ID: ${malId}`);
+    
+    // Pobierz characters
+    const charactersResponse = await axios.get(
+      `https://api.jikan.moe/v4/anime/${malId}/characters`
+    );
+    
+    const characters = charactersResponse.data.data || [];
+    console.log(`👥 Znaleziono ${characters.length} characters`);
+    
+    // Przygotuj dane characters
+    const charactersData = characters
+      .filter(char => char.character && char.character.name && 
+                     (char.role === "Main" || char.role === "Supporting"))
+      .slice(0, 5)
+      .map(char => ({
+        name: char.character.name,
+        role: char.role,
+        image: char.character.images?.jpg?.image_url || null
+      }));
+    
+    res.json({
+      title: title,
+      malId: malId,
+      totalCharacters: characters.length,
+      characters: charactersData,
+      rawCharacters: characters.slice(0, 3) // Pierwsze 3 surowe dane
+    });
+    
+  } catch (error) {
+    console.error("❌ Błąd testu:", error.message);
+    res.status(500).json({ 
+      error: "Błąd podczas testowania",
       details: error.message 
     });
   }
