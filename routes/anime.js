@@ -132,7 +132,7 @@ router.get("/featured",
 
 // Random categories with cache
 router.get("/random-categories", 
-  cacheService.cacheMiddleware('anime-random', 1800), // 30 minutes cache
+  // cacheService.cacheMiddleware('anime-random', 1800), // 30 minutes cache - TYMCZASOWO WYŁĄCZONE
   async (req, res) => {
     try {
       const categories = [
@@ -158,6 +158,7 @@ router.get("/random-categories",
         .sort(() => Math.random() - 0.5)
         .slice(0, 50);
       
+      console.log(`✅ /random-categories: Zwrócono ${finalList.length} anime`);
       res.json(finalList);
     } catch (err) {
       console.error("❌ Błąd w /random-categories:", err);
