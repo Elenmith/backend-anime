@@ -147,14 +147,39 @@ const fetchCharactersAndVoiceCast = async (limit = 100) => {
     console.log(`❌ Błędy: ${errorCount}`);
     console.log(`📊 Przetworzono: ${processed}/${animeWithoutCharacters.length}`);
 
+    return { successCount, errorCount, processed, total: animeWithoutCharacters.length };
+
   } catch (error) {
     console.error("❌ Błąd podczas pobierania characters:", error);
-  } finally {
-    mongoose.disconnect();
-    console.log("🔌 Zamknięto połączenie z MongoDB.");
+    throw error;
   }
 };
 
-// Uruchom skrypt
-console.log("🚀 Uruchamiam pobieranie characters i voice cast...");
-fetchCharactersAndVoiceCast(20); // Pobierz dla 20 anime (test) 
+// Eksportuj funkcję
+module.exports = { fetchCharactersAndVoiceCast };
+
+// Jeśli skrypt jest uruchamiany bezpośrednio, uruchom funkcję
+if (require.main === module) {
+  require("dotenv").config();
+  mongoose.set("strictQuery", false);
+
+  mongoose
+    .connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    })
+    .then(() => {
+      console.log("✅ Połączono z MongoDB");
+      return fetchCharactersAndVoiceCast(20); // Pobierz dla 20 anime (test)
+    })
+    .then(() => {
+      mongoose.disconnect();
+      console.log("🔌 Zamknięto połączenie z MongoDB.");
+    })
+    .catch((err) => {
+      console.error("❌ Błąd połączenia:", err);
+      process.exit(1);
+    });
+} 

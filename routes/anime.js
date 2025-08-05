@@ -130,6 +130,38 @@ router.get("/featured",
   }
 );
 
+// Proxy for images to avoid CORS issues
+router.get("/image-proxy", async (req, res) => {
+  try {
+    const imageUrl = req.query.url;
+    
+    if (!imageUrl) {
+      return res.status(400).json({ error: "Image URL is required" });
+    }
+
+    // Fetch image from external source
+    const response = await fetch(imageUrl);
+    
+    if (!response.ok) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    // Get image buffer
+    const buffer = await response.arrayBuffer();
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // Send image
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error("❌ Image proxy error:", err);
+    res.status(500).json({ error: "Failed to fetch image" });
+  }
+});
+
 // Random categories with cache
 router.get("/random-categories", 
   // cacheService.cacheMiddleware('anime-random', 1800), // 30 minutes cache - TYMCZASOWO WYŁĄCZONE
@@ -202,5 +234,32 @@ router.get("/:id",
     }
   }
 );
+
+// Endpoint to fetch characters and voice cast for anime
+router.post("/fetch-characters", async (req, res) => {
+  try {
+    const { limit = 20 } = req.body;
+    
+    console.log(`🚀 Uruchamiam pobieranie characters dla ${limit} anime...`);
+    
+    // Import the fetch function
+    const { fetchCharactersAndVoiceCast } = require('../fetchCharacters');
+    
+    // Run the fetch function
+    await fetchCharactersAndVoiceCast(limit);
+    
+    res.json({ 
+      success: true, 
+      message: `Pobieranie characters zakończone dla ${limit} anime` 
+    });
+    
+  } catch (error) {
+    console.error("❌ Błąd podczas pobierania characters:", error);
+    res.status(500).json({ 
+      error: "Błąd podczas pobierania characters",
+      details: error.message 
+    });
+  }
+});
 
 module.exports = router;
