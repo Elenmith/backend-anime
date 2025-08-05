@@ -262,4 +262,54 @@ router.post("/fetch-characters", async (req, res) => {
   }
 });
 
+// Endpoint to clear old characters data
+router.post("/clear-characters", async (req, res) => {
+  try {
+    console.log("🧹 Uruchamiam czyszczenie starych danych characters...");
+    
+    // Znajdź anime z dziwnymi danymi characters (pojedyncze litery)
+    const animeWithBadData = await Anime.find({
+      $or: [
+        { "characters.0": { $exists: true } }, // Ma characters z indeksami numerycznymi
+        { "voiceCast.0": { $exists: true } }   // Ma voice cast z indeksami numerycznymi
+      ]
+    });
+
+    console.log(`📊 Znaleziono ${animeWithBadData.length} anime z zepsutymi danymi`);
+
+    // Wyczyść characters i voice cast dla tych anime
+    const updateResult = await Anime.updateMany(
+      {
+        $or: [
+          { "characters.0": { $exists: true } },
+          { "voiceCast.0": { $exists: true } }
+        ]
+      },
+      {
+        $unset: {
+          characters: 1,
+          voiceCast: 1,
+          streamingPlatforms: 1
+        }
+      }
+    );
+
+    console.log(`✅ Wyczyszczono dane dla ${updateResult.modifiedCount} anime`);
+    
+    res.json({ 
+      success: true, 
+      message: `Wyczyszczono dane dla ${updateResult.modifiedCount} anime`,
+      found: animeWithBadData.length,
+      cleared: updateResult.modifiedCount
+    });
+    
+  } catch (error) {
+    console.error("❌ Błąd podczas czyszczenia:", error);
+    res.status(500).json({ 
+      error: "Błąd podczas czyszczenia danych",
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;
