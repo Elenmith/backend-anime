@@ -32,9 +32,24 @@ const animeSchema = new mongoose.Schema({
   duration: String,
   releaseDate: String,
   director: String,
-  characters: [String],
-  voiceCast: [String],
-  streamingPlatforms: [String],
+  malId: {
+    type: Number,
+    index: true  // Index for MAL ID lookups
+  },
+  characters: [{
+    name: String,
+    role: String,
+    image: String
+  }],
+  voiceCast: [{
+    character: String,
+    actor: String,
+    role: String
+  }],
+  streamingPlatforms: [{
+    name: String,
+    url: String
+  }],
   gallery: [String]
 }, {
   timestamps: true
