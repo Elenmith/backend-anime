@@ -84,25 +84,43 @@ const fetchCharactersAndVoiceCast = async (limit = 100) => {
         const characters = charactersResponse.data.data || [];
         const staff = staffResponse.data.data || [];
 
-        // Przygotuj dane characters
-        const charactersData = characters
-          .filter(char => char.role === "Main" || char.role === "Supporting")
-          .slice(0, 10) // Maksymalnie 10 głównych postaci
-          .map(char => ({
-            name: char.character.name,
-            role: char.role,
-            image: char.character.images?.jpg?.image_url || null
-          }));
+        console.log(`📊 Pobrano ${characters.length} characters i ${staff.length} staff dla ${anime.title}`);
 
-        // Przygotuj dane voice cast
+        // Przygotuj dane characters - poprawiona logika
+        const charactersData = characters
+          .filter(char => {
+            // Sprawdź czy char.character istnieje i ma name
+            return char.character && char.character.name && 
+                   (char.role === "Main" || char.role === "Supporting");
+          })
+          .slice(0, 10) // Maksymalnie 10 głównych postaci
+          .map(char => {
+            console.log(`👤 Character: ${char.character.name} (${char.role})`);
+            return {
+              name: char.character.name,
+              role: char.role,
+              image: char.character.images?.jpg?.image_url || null
+            };
+          });
+
+        // Przygotuj dane voice cast - poprawiona logika
         const voiceCastData = staff
-          .filter(person => person.positions?.some(pos => pos.includes("Voice")))
+          .filter(person => {
+            // Sprawdź czy person ma positions i czy zawiera "Voice"
+            return person.positions && 
+                   person.positions.some(pos => pos.includes("Voice")) &&
+                   person.person && person.person.name;
+          })
           .slice(0, 10) // Maksymalnie 10 voice actors
-          .map(person => ({
-            character: person.character?.name || "Unknown Character",
-            actor: person.person.name,
-            role: person.positions?.find(pos => pos.includes("Voice")) || "Voice Actor"
-          }));
+          .map(person => {
+            const characterName = person.character?.name || "Unknown Character";
+            console.log(`🎭 Voice Actor: ${person.person.name} -> ${characterName}`);
+            return {
+              character: characterName,
+              actor: person.person.name,
+              role: person.positions?.find(pos => pos.includes("Voice")) || "Voice Actor"
+            };
+          });
 
         // Przygotuj streaming platforms (mock data)
         const streamingPlatforms = [
@@ -110,6 +128,8 @@ const fetchCharactersAndVoiceCast = async (limit = 100) => {
           { name: "Funimation", url: "https://www.funimation.com" },
           { name: "Netflix", url: "https://www.netflix.com" }
         ];
+
+        console.log(`💾 Zapisuję: ${charactersData.length} characters, ${voiceCastData.length} voice actors`);
 
         // Aktualizuj anime w bazie
         await Anime.findByIdAndUpdate(anime._id, {
