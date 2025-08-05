@@ -37,27 +37,32 @@ const findMalIdByTitle = async (title) => {
   }
 };
 
-const fetchCharactersAndVoiceCast = async (limit = 100) => {
+const fetchCharactersAndVoiceCast = async (limit = null) => {
   try {
     // Pobierz anime bez characters/voice cast
-    const animeWithoutCharacters = await Anime.find({
+    const query = {
       $or: [
         { characters: { $exists: false } },
         { characters: { $size: 0 } },
         { voiceCast: { $exists: false } },
         { voiceCast: { $size: 0 } }
       ]
-    }).limit(limit);
+    };
+
+    const animeWithoutCharacters = limit 
+      ? await Anime.find(query).limit(limit)
+      : await Anime.find(query);
 
     console.log(`🚀 Znaleziono ${animeWithoutCharacters.length} anime do uzupełnienia...`);
 
     let processed = 0;
     let successCount = 0;
     let errorCount = 0;
+    let rateLimitCount = 0;
 
     for (const anime of animeWithoutCharacters) {
       try {
-        console.log(`📄 Przetwarzam: ${anime.title} (${processed + 1}/${animeWithoutCharacters.length})`);
+        console.log(`📄 [${processed + 1}/${animeWithoutCharacters.length}] Przetwarzam: ${anime.title}`);
 
         // Najpierw znajdź MAL ID
         const malId = await findMalIdByTitle(anime.title);
@@ -142,32 +147,50 @@ const fetchCharactersAndVoiceCast = async (limit = 100) => {
         console.log(`✅ Zaktualizowano: ${anime.title} (${charactersData.length} characters, ${voiceCastData.length} voice actors)`);
         successCount++;
 
-        // Czekaj 1 sekundę między requestami (rate limiting)
+        // Rate limiting - 1 sekunda między requestami
         await delay(1000);
 
       } catch (error) {
         console.error(`❌ Błąd przy ${anime.title}:`, error.message);
-        errorCount++;
+        
+        // Sprawdź czy to rate limit
+        if (error.response?.status === 429) {
+          console.log(`🚫 Rate limit osiągnięty! Czekam 60 sekund...`);
+          rateLimitCount++;
+          await delay(60000); // Czekaj 1 minutę
+          continue; // Spróbuj ponownie
+        }
         
         // Jeśli to błąd 404 (anime nie istnieje w MAL), pomiń
         if (error.response?.status === 404) {
           console.log(`⚠️ Anime nie znalezione w MAL: ${anime.title}`);
+          errorCount++;
+          processed++;
           continue;
         }
         
-        // Czekaj dłużej przy błędzie
-        await delay(2000);
+        // Inne błędy - czekaj dłużej
+        console.log(`⏳ Błąd - czekam 5 sekund przed kolejnym...`);
+        await delay(5000);
+        errorCount++;
       }
 
       processed++;
+      
+      // Co 10 anime, pokaż postęp
+      if (processed % 10 === 0) {
+        console.log(`📈 Postęp: ${processed}/${animeWithoutCharacters.length} (${Math.round(processed/animeWithoutCharacters.length*100)}%)`);
+        console.log(`✅ Sukces: ${successCount}, ❌ Błędy: ${errorCount}, 🚫 Rate limits: ${rateLimitCount}`);
+      }
     }
 
     console.log(`🎉 Zakończono!`);
     console.log(`✅ Udało się: ${successCount}`);
     console.log(`❌ Błędy: ${errorCount}`);
+    console.log(`🚫 Rate limits: ${rateLimitCount}`);
     console.log(`📊 Przetworzono: ${processed}/${animeWithoutCharacters.length}`);
 
-    return { successCount, errorCount, processed, total: animeWithoutCharacters.length };
+    return { successCount, errorCount, rateLimitCount, processed, total: animeWithoutCharacters.length };
 
   } catch (error) {
     console.error("❌ Błąd podczas pobierania characters:", error);
@@ -192,7 +215,8 @@ if (require.main === module) {
     })
     .then(() => {
       console.log("✅ Połączono z MongoDB");
-      return fetchCharactersAndVoiceCast(20); // Pobierz dla 20 anime (test)
+      // Pobierz dla wszystkich anime (bez limitu)
+      return fetchCharactersAndVoiceCast();
     })
     .then(() => {
       mongoose.disconnect();
