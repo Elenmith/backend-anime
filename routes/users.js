@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { authenticateToken, requireAdmin, generateToken } = require('../middleware/auth');
 const router = express.Router();
@@ -33,6 +34,12 @@ const validateLogin = [
 router.post('/register', validateRegistration, async (req, res) => {
   try {
     console.log('Registration request body:', req.body);
+    console.log('MongoDB connection state:', mongoose.connection.readyState);
+    console.log('Environment variables check:', {
+      hasMongoURI: !!process.env.MONGODB_URI,
+      hasJWTSecret: !!process.env.JWT_SECRET,
+      nodeEnv: process.env.NODE_ENV
+    });
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -92,9 +99,11 @@ router.post('/register', validateRegistration, async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       error: 'Registration failed',
-      message: 'Internal server error'
+      message: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -104,6 +113,14 @@ router.post('/register', validateRegistration, async (req, res) => {
 // @access  Public
 router.post('/login', validateLogin, async (req, res) => {
   try {
+    console.log('Login request body:', req.body);
+    console.log('MongoDB connection state:', mongoose.connection.readyState);
+    console.log('Environment variables check:', {
+      hasMongoURI: !!process.env.MONGODB_URI,
+      hasJWTSecret: !!process.env.JWT_SECRET,
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
@@ -161,9 +178,11 @@ router.post('/login', validateLogin, async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       error: 'Login failed',
-      message: 'Internal server error'
+      message: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
