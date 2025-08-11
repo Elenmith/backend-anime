@@ -60,6 +60,7 @@ const corsOptions = {
   origin: [
     'https://mood4anime.com',
     'https://www.mood4anime.com',
+    'https://mood-for-anime-443a0efbedff.herokuapp.com',
     'http://localhost:3000',
     'http://localhost:3001'
   ],

@@ -32,8 +32,11 @@ const validateLogin = [
 // @access  Public
 router.post('/register', validateRegistration, async (req, res) => {
   try {
+    console.log('Registration request body:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ 
         error: 'Validation failed',
         details: errors.array()
