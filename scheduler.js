@@ -59,18 +59,31 @@ const checkAndSetFeaturedAnime = async () => {
 
 // Funkcja do inicjalizacji schedulera
 const initScheduler = () => {
-  // Sprawdź i ustaw featured anime przy starcie serwera
-  checkAndSetFeaturedAnime();
+  try {
+    console.log("🚀 Initializing scheduler...");
+    
+    // Sprawdź i ustaw featured anime przy starcie serwera
+    checkAndSetFeaturedAnime().catch(err => {
+      console.error("❌ Error in initial featured anime check:", err);
+    });
 
-  // Uruchom codziennie o 00:00 (północ) - polski czas
-  cron.schedule('0 0 * * *', async () => {
-    console.log("⏰ Daily cron job triggered - updating featured anime");
-    await setFeaturedAnime();
-  }, {
-    timezone: "Europe/Warsaw"
-  });
+    // Uruchom codziennie o 00:00 (północ) - polski czas
+    cron.schedule('0 0 * * *', async () => {
+      console.log("⏰ Daily cron job triggered - updating featured anime");
+      try {
+        await setFeaturedAnime();
+      } catch (err) {
+        console.error("❌ Error in daily cron job:", err);
+      }
+    }, {
+      timezone: "Europe/Warsaw"
+    });
 
-  console.log("📅 Scheduler initialized - featured anime will update daily at 00:00 (Warsaw time)");
+    console.log("✅ Scheduler initialized - featured anime will update daily at 00:00 (Warsaw time)");
+  } catch (error) {
+    console.error("❌ Error initializing scheduler:", error);
+    throw error;
+  }
 };
 
 module.exports = { initScheduler, setFeaturedAnime, checkAndSetFeaturedAnime }; 

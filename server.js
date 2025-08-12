@@ -94,6 +94,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Input sanitization
 app.use(sanitizeInput);
 
+// Simple test endpoint
+app.get("/test", (req, res) => {
+  res.json({ 
+    message: "Backend is working!", 
+    timestamp: new Date().toISOString() 
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 const mongoURI = process.env.MONGODB_URI;
@@ -102,13 +110,18 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => {
-    console.log("Połączono z MongoDB!");
-    // Inicjalizuj scheduler po połączeniu z bazą danych
-    initScheduler();
+  .then(async () => {
+    console.log("✅ Połączono z MongoDB!");
+    try {
+      // Inicjalizuj scheduler po połączeniu z bazą danych
+      initScheduler();
+    } catch (error) {
+      console.error("❌ Błąd inicjalizacji schedulera:", error);
+      // Nie kończ procesu, jeśli scheduler się nie uruchomi
+    }
   })
   .catch((err) => {
-    console.error("Błąd połączenia z MongoDB:", err.message);
+    console.error("❌ Błąd połączenia z MongoDB:", err.message);
     process.exit(1);
   });
 
@@ -222,9 +235,30 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📡 CORS enabled for: ${corsOptions.origin ? 'dynamic origins' : 'all origins'}`);
+  console.log(`📡 CORS enabled for: dynamic origins`);
   console.log(`⏰ Started at: ${new Date().toISOString()}`);
+  console.log(`🔗 MongoDB URI: ${mongoURI ? 'Set' : 'Not set'}`);
+  console.log(`🔑 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Not set'}`);
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error('❌ Port is already in use');
+  }
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
