@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Anime = require("../models/Anime");
 const FeaturedAnime = require("../models/FeaturedAnime");
-const cacheService = require("../services/cacheService");
+// const cacheService = require("../services/cacheService");
 const { 
   validateAnimeSearch, 
   validateMoodFilter, 
@@ -18,7 +18,7 @@ router.get("/", (req, res) => {
 // Search endpoint with validation and cache
 router.get("/search", 
   validateAnimeSearch,
-  cacheService.cacheMiddleware('anime-search', 1800), // 30 minutes cache
+  // cacheService.cacheMiddleware('anime-search', 1800), // 30 minutes cache
   async (req, res) => {
     const { title } = req.query;
 
@@ -46,7 +46,7 @@ router.get("/search",
 // Mood filtering with validation and cache
 router.get("/moods/:mood", 
   validateMoodFilter,
-  cacheService.cacheMiddleware('anime-moods', 3600), // 1 hour cache
+  // cacheService.cacheMiddleware('anime-moods', 3600), // 1 hour cache
   async (req, res) => {
     try {
       const mood = req.params.mood;
@@ -71,7 +71,7 @@ router.get("/moods/:mood",
 // Genre filtering with validation and cache
 router.get("/genre/:genre", 
   validateGenreFilter,
-  cacheService.cacheMiddleware('anime-genre', 3600), // 1 hour cache
+  // cacheService.cacheMiddleware('anime-genre', 3600), // 1 hour cache
   async (req, res) => {
     try {
       const genre = req.params.genre;
@@ -104,7 +104,7 @@ router.get("/genre/:genre",
 
 // Posters endpoint with cache
 router.get("/posters", 
-  cacheService.cacheMiddleware('anime-posters', 7200), // 2 hours cache
+  // cacheService.cacheMiddleware('anime-posters', 7200), // 2 hours cache
   async (req, res) => {
     try {
       const posters = await Anime.find({}, "_id title imageUrl");
@@ -117,7 +117,7 @@ router.get("/posters",
 
 // Featured anime with cache
 router.get("/featured", 
-  cacheService.cacheMiddleware('anime-featured', 1800), // 30 minutes cache
+  // cacheService.cacheMiddleware('anime-featured', 1800), // 30 minutes cache
   async (req, res) => {
     try {
       const featured = await FeaturedAnime.findOne({}).populate("anime");
@@ -203,7 +203,7 @@ router.get("/random-categories",
 // Anime by ID with validation and cache
 router.get("/:id", 
   validateAnimeId,
-  cacheService.cacheMiddleware('anime-details', 3600), // 1 hour cache
+  // cacheService.cacheMiddleware('anime-details', 3600), // 1 hour cache
   async (req, res) => {
     try {
       const animeId = req.params.id;

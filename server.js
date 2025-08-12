@@ -14,6 +14,12 @@ const usersRouter = require("./routes/users");
 const { sanitizeInput } = require("./middleware/validation");
 require("dotenv").config();
 
+console.log("🔧 Environment check:");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("PORT:", process.env.PORT);
+console.log("MONGODB_URI exists:", !!process.env.MONGODB_URI);
+console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
+
 const app = express();
 
 // Security middleware
@@ -102,12 +108,10 @@ app.get("/test", (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-
+// Sprawdź wymagane zmienne środowiskowe na początku
 const mongoURI = process.env.MONGODB_URI;
 const jwtSecret = process.env.JWT_SECRET;
 
-// Sprawdź wymagane zmienne środowiskowe
 if (!mongoURI) {
   console.error("❌ MONGODB_URI is not set!");
   process.exit(1);
@@ -117,26 +121,29 @@ if (!jwtSecret) {
   console.error("❌ JWT_SECRET is not set!");
   process.exit(1);
 }
-mongoose
-  .connect(mongoURI, {
+
+const PORT = process.env.PORT || 5000;
+console.log("🔗 Connecting to MongoDB...");
+
+try {
+  await mongoose.connect(mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-  })
-  .then(async () => {
-    console.log("✅ Połączono z MongoDB!");
-    try {
-      // Inicjalizuj scheduler po połączeniu z bazą danych
-      // initScheduler();
-      console.log("✅ Scheduler temporarily disabled");
-    } catch (error) {
-      console.error("❌ Błąd inicjalizacji schedulera:", error);
-      // Nie kończ procesu, jeśli scheduler się nie uruchomi
-    }
-  })
-  .catch((err) => {
-    console.error("❌ Błąd połączenia z MongoDB:", err.message);
-    process.exit(1);
   });
+  console.log("✅ Połączono z MongoDB!");
+  
+  try {
+    // Inicjalizuj scheduler po połączeniu z bazą danych
+    // initScheduler();
+    console.log("✅ Scheduler temporarily disabled");
+  } catch (error) {
+    console.error("❌ Błąd inicjalizacji schedulera:", error);
+    // Nie kończ procesu, jeśli scheduler się nie uruchomi
+  }
+} catch (err) {
+  console.error("❌ Błąd połączenia z MongoDB:", err.message);
+  process.exit(1);
+}
 
 // Health check endpoint
 app.get("/health", (req, res) => {
