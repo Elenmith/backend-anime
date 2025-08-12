@@ -50,7 +50,7 @@ class JustWatchService {
     });
   }
 
-  // Wyszukaj anime na JustWatch przez web scraping
+  // Wyszukaj anime na JustWatch - tymczasowo tylko fallback
   async searchAnime(title) {
     const cacheKey = `justwatch_search_${title.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     
@@ -62,42 +62,14 @@ class JustWatchService {
     }
 
     try {
-      this.checkRateLimit();
+      // Tymczasowo wyłączamy web scraping - używamy tylko fallback
+      console.log(`🔍 Using fallback data for: ${title}`);
       
-      console.log(`🔍 Searching JustWatch for: ${title}`);
+      const fallbackData = this.getFallbackData(title);
       
-      // Wyszukaj anime na JustWatch
-      const searchUrl = `${this.baseUrl}/search?q=${encodeURIComponent(title)}`;
-      
-      const response = await axios.get(searchUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1'
-        },
-        timeout: 15000
-      });
-
-      const $ = cheerio.load(response.data);
-      
-      // Znajdź pierwszy wynik anime
-      const firstResult = $('.title-list-grid__item').first();
-      const animeUrl = firstResult.find('a').attr('href');
-      
-      if (!animeUrl) {
-        console.log(`❌ No results found for: ${title}`);
-        return null;
-      }
-
-      // Pobierz szczegóły anime
-      const animeDetails = await this.getAnimeDetails(animeUrl);
-      
-      if (animeDetails) {
-        this.setCache(cacheKey, animeDetails);
-        return animeDetails;
+      if (fallbackData) {
+        this.setCache(cacheKey, fallbackData);
+        return fallbackData;
       }
       
       return null;
@@ -114,62 +86,10 @@ class JustWatchService {
     }
   }
 
-  // Pobierz szczegóły anime z JustWatch
+  // Pobierz szczegóły anime z JustWatch - tymczasowo wyłączone
   async getAnimeDetails(animeUrl) {
-    try {
-      this.checkRateLimit();
-      
-      const fullUrl = animeUrl.startsWith('http') ? animeUrl : `${this.baseUrl}${animeUrl}`;
-      
-      const response = await axios.get(fullUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate',
-          'Connection': 'keep-alive'
-        },
-        timeout: 15000
-      });
-
-      const $ = cheerio.load(response.data);
-      
-      // Pobierz tytuł
-      const title = $('h1').first().text().trim();
-      
-      // Pobierz platformy streaming
-      const streamingPlatforms = [];
-      
-      $('.price-comparison__grid__row').each((i, element) => {
-        const platformName = $(element).find('.price-comparison__grid__row__icon').attr('alt');
-        const platformUrl = $(element).find('a').attr('href');
-        
-        if (platformName && platformUrl) {
-          const platform = this.mapPlatformName(platformName);
-          if (platform) {
-            streamingPlatforms.push({
-              name: platform.name,
-              url: platform.url,
-              monetization: 'flatrate'
-            });
-          }
-        }
-      });
-
-      if (streamingPlatforms.length > 0) {
-        return {
-          title: title,
-          justwatchId: animeUrl.split('/').pop(),
-          streamingPlatforms: streamingPlatforms
-        };
-      }
-      
-      return null;
-      
-    } catch (error) {
-      console.error(`❌ Error getting anime details:`, error.message);
-      return null;
-    }
+    // Tymczasowo wyłączone
+    return null;
   }
 
   // Mapuj nazwy platform z JustWatch
@@ -225,6 +145,31 @@ class JustWatchService {
         { name: 'Crunchyroll', url: 'https://www.crunchyroll.com/series/GRVN8MVQY/demon-slayer', monetization: 'flatrate' },
         { name: 'Netflix', url: 'https://www.netflix.com/title/80045960', monetization: 'flatrate' },
         { name: 'Funimation', url: 'https://www.funimation.com/shows/demon-slayer/', monetization: 'flatrate' }
+      ],
+      'my hero academia': [
+        { name: 'Crunchyroll', url: 'https://www.crunchyroll.com/series/GRVN8MVQY/my-hero-academia', monetization: 'flatrate' },
+        { name: 'Funimation', url: 'https://www.funimation.com/shows/my-hero-academia/', monetization: 'flatrate' },
+        { name: 'Hulu', url: 'https://www.hulu.com/series/my-hero-academia', monetization: 'flatrate' }
+      ],
+      'jujutsu kaisen': [
+        { name: 'Crunchyroll', url: 'https://www.crunchyroll.com/series/GRVN8MVQY/jujutsu-kaisen', monetization: 'flatrate' },
+        { name: 'Netflix', url: 'https://www.netflix.com/title/80045960', monetization: 'flatrate' },
+        { name: 'Funimation', url: 'https://www.funimation.com/shows/jujutsu-kaisen/', monetization: 'flatrate' }
+      ],
+      'dragon ball': [
+        { name: 'Crunchyroll', url: 'https://www.crunchyroll.com/series/GRVN8MVQY/dragon-ball', monetization: 'flatrate' },
+        { name: 'Funimation', url: 'https://www.funimation.com/shows/dragon-ball/', monetization: 'flatrate' },
+        { name: 'Hulu', url: 'https://www.hulu.com/series/dragon-ball', monetization: 'flatrate' }
+      ],
+      'fullmetal alchemist': [
+        { name: 'Crunchyroll', url: 'https://www.crunchyroll.com/series/GRVN8MVQY/fullmetal-alchemist', monetization: 'flatrate' },
+        { name: 'Netflix', url: 'https://www.netflix.com/title/80045960', monetization: 'flatrate' },
+        { name: 'Funimation', url: 'https://www.funimation.com/shows/fullmetal-alchemist/', monetization: 'flatrate' }
+      ],
+      'bleach': [
+        { name: 'Crunchyroll', url: 'https://www.crunchyroll.com/series/GRVN8MVQY/bleach', monetization: 'flatrate' },
+        { name: 'Hulu', url: 'https://www.hulu.com/series/bleach', monetization: 'flatrate' },
+        { name: 'Netflix', url: 'https://www.netflix.com/title/80045960', monetization: 'flatrate' }
       ]
     };
 
