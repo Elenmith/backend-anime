@@ -9,6 +9,7 @@ const animeRouter = require("./routes/anime");
 const featuredAnimeRouter = require("./routes/featuredAnime");
 const categoriesRouter = require("./routes/categories");
 const usersRouter = require("./routes/users");
+const recommendationsRouter = require("./routes/recommendations");
 const { initScheduler } = require("./scheduler");
 const { sanitizeInput } = require("./middleware/validation");
 require("dotenv").config();
@@ -108,6 +109,7 @@ app.use("/api/anime", animeRouter);
 app.use("/api/featured-anime", featuredAnimeRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/recommendations", recommendationsRouter);
 
 app.get("/", (req, res) => {
   res.send("Backend działa!");
