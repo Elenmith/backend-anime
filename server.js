@@ -56,20 +56,38 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration - bardziej elastyczna
 const corsOptions = {
-  origin: [
-    'https://mood4anime.com',
-    'https://www.mood4anime.com',
-    'https://mood-for-anime-443a0efbedff.herokuapp.com',
-    'http://localhost:3000',
-    'http://localhost:3001'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'https://mood4anime.com',
+      'https://www.mood4anime.com',
+      'https://mood-for-anime-443a0efbedff.herokuapp.com',
+      'http://localhost:3000',
+      'http://localhost:3001'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -112,7 +130,12 @@ app.use("/api/users", usersRouter);
 app.use("/api/recommendations", recommendationsRouter);
 
 app.get("/", (req, res) => {
-  res.send("Backend działa!");
+  res.json({
+    message: "Backend działa!",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: "1.0.0"
+  });
 });
 
 app.get("/health", (req, res) => {
@@ -170,7 +193,14 @@ if (process.env.NODE_ENV === "production") {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    headers: req.headers,
+    timestamp: new Date().toISOString()
+  });
   
   // Don't leak error details in production
   const errorMessage = process.env.NODE_ENV === 'production' 
@@ -193,6 +223,8 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📡 CORS enabled for: ${corsOptions.origin ? 'dynamic origins' : 'all origins'}`);
+  console.log(`⏰ Started at: ${new Date().toISOString()}`);
 });
