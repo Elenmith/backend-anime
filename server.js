@@ -15,6 +15,9 @@ require("dotenv").config();
 
 const app = express();
 
+// Trust proxy for Heroku
+app.set('trust proxy', 1);
+
 // Security middleware
 const helmet = require("helmet");
 const xss = require("xss-clean");
@@ -133,9 +136,26 @@ app.post("/anime", async (req, res) => {
 
 app.get("/anime", async (req, res) => {
   try {
-    const animeList = await Anime.find();
-    res.status(200).json(animeList);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const animeList = await Anime.find()
+      .select('title imageUrl rating genres moods synopsis')
+      .limit(limit)
+      .skip(skip)
+      .sort({ title: 1 });
+
+    const totalCount = await Anime.countDocuments();
+
+    res.status(200).json({
+      anime: animeList,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+      totalCount: totalCount
+    });
   } catch (err) {
+    console.error('Error fetching anime:', err);
     res.status(500).json({ error: err.message });
   }
 });
