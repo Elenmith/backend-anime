@@ -11,7 +11,8 @@ const {
 } = require("../middleware/validation");
 const axios = require("axios"); // Added axios for MAL API
 
-router.get("/", (req, res) => {
+// Basic health check endpoint
+router.get("/health", (req, res) => {
   res.json({ message: "✅ Anime API is working" });
 });
 
@@ -199,6 +200,133 @@ router.get("/random-categories",
     }
   }
 );
+
+// Enhanced anime search with multiple filters
+router.get("/", async (req, res) => {
+  try {
+    const { 
+      limit = 20, 
+      page = 1, 
+      mood, 
+      platform, 
+      genre,
+      rating,
+      sort = 'rating' 
+    } = req.query;
+
+    // Build query object
+    const query = {};
+    
+    if (mood) {
+      query.moods = { $regex: new RegExp(mood, 'i') };
+    }
+    
+    if (platform) {
+      query.streamingPlatforms = { 
+        $elemMatch: { 
+          name: { $regex: new RegExp(platform, 'i') } 
+        } 
+      };
+    }
+    
+    if (genre) {
+      query.genres = { $regex: new RegExp(genre, 'i') };
+    }
+    
+    if (rating) {
+      query.rating = { $gte: parseFloat(rating) };
+    }
+
+    // Build sort object
+    let sortObj = {};
+    switch (sort) {
+      case 'rating':
+        sortObj = { rating: -1 };
+        break;
+      case 'title':
+        sortObj = { title: 1 };
+        break;
+      case 'releaseDate':
+        sortObj = { releaseDate: -1 };
+        break;
+      default:
+        sortObj = { rating: -1 };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const animeList = await Anime.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .select('_id title imageUrl rating genres moods streamingPlatforms synopsis');
+
+    const totalCount = await Anime.countDocuments(query);
+    
+    console.log(`✅ /anime: Zwrócono ${animeList.length} anime z ${totalCount} dostępnych`);
+    
+    res.json({
+      anime: animeList,
+      totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / parseInt(limit)),
+      hasNextPage: skip + animeList.length < totalCount,
+      hasPrevPage: parseInt(page) > 1
+    });
+
+  } catch (err) {
+    console.error("❌ Błąd w /anime:", err);
+    res.status(500).json({ error: "Błąd podczas pobierania anime" });
+  }
+});
+
+// Platform-specific anime endpoint
+router.get("/platform/:platform", async (req, res) => {
+  try {
+    const { platform } = req.params;
+    const { limit = 30, page = 1, mood, genre } = req.query;
+    
+    const query = {
+      streamingPlatforms: { 
+        $elemMatch: { 
+          name: { $regex: new RegExp(platform, 'i') } 
+        } 
+      }
+    };
+    
+    if (mood) {
+      query.moods = { $regex: new RegExp(mood, 'i') };
+    }
+    
+    if (genre) {
+      query.genres = { $regex: new RegExp(genre, 'i') };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const animeList = await Anime.find(query)
+      .sort({ rating: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .select('_id title imageUrl rating genres moods streamingPlatforms synopsis');
+
+    const totalCount = await Anime.countDocuments(query);
+    
+    console.log(`✅ /platform/${platform}: Zwrócono ${animeList.length} anime`);
+    
+    res.json({
+      anime: animeList,
+      totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / parseInt(limit)),
+      platform: platform
+    });
+
+  } catch (err) {
+    console.error("❌ Błąd w /platform:", err);
+    res.status(500).json({ error: "Błąd podczas pobierania anime dla platformy" });
+  }
+});
 
 // Anime by ID with validation and cache
 router.get("/:id", 
