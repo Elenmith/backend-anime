@@ -10,7 +10,7 @@ const featuredAnimeRouter = require("./routes/featuredAnime");
 const categoriesRouter = require("./routes/categories");
 const usersRouter = require("./routes/users");
 // const recommendationsRouter = require("./routes/recommendations");
-const { initScheduler } = require("./scheduler");
+// const { initScheduler } = require("./scheduler");
 const { sanitizeInput } = require("./middleware/validation");
 require("dotenv").config();
 
@@ -105,6 +105,18 @@ app.get("/test", (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 const mongoURI = process.env.MONGODB_URI;
+const jwtSecret = process.env.JWT_SECRET;
+
+// Sprawdź wymagane zmienne środowiskowe
+if (!mongoURI) {
+  console.error("❌ MONGODB_URI is not set!");
+  process.exit(1);
+}
+
+if (!jwtSecret) {
+  console.error("❌ JWT_SECRET is not set!");
+  process.exit(1);
+}
 mongoose
   .connect(mongoURI, {
     useNewUrlParser: true,
@@ -114,7 +126,8 @@ mongoose
     console.log("✅ Połączono z MongoDB!");
     try {
       // Inicjalizuj scheduler po połączeniu z bazą danych
-      initScheduler();
+      // initScheduler();
+      console.log("✅ Scheduler temporarily disabled");
     } catch (error) {
       console.error("❌ Błąd inicjalizacji schedulera:", error);
       // Nie kończ procesu, jeśli scheduler się nie uruchomi
@@ -235,13 +248,15 @@ app.use((req, res) => {
   });
 });
 
+console.log("🚀 Starting server...");
+console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔗 MongoDB URI: ${mongoURI ? 'Set' : 'Not set'}`);
+console.log(`🔑 JWT Secret: ${jwtSecret ? 'Set' : 'Not set'}`);
+
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Server is running on port ${PORT}`);
   console.log(`📡 CORS enabled for: dynamic origins`);
   console.log(`⏰ Started at: ${new Date().toISOString()}`);
-  console.log(`🔗 MongoDB URI: ${mongoURI ? 'Set' : 'Not set'}`);
-  console.log(`🔑 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Not set'}`);
 });
 
 // Handle server errors
