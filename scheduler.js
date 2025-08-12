@@ -67,19 +67,20 @@ const initScheduler = () => {
       console.error("❌ Error in initial featured anime check:", err);
     });
 
-    // Uruchom codziennie o 00:00 (północ) - polski czas
-    cron.schedule('0 0 * * *', async () => {
-      console.log("⏰ Daily cron job triggered - updating featured anime");
-      try {
-        await setFeaturedAnime();
-      } catch (err) {
-        console.error("❌ Error in daily cron job:", err);
-      }
-    }, {
-      timezone: "Europe/Warsaw"
-    });
+    // Tymczasowo wyłącz cron - może powodować problemy
+    console.log("⚠️ Cron jobs temporarily disabled for debugging");
+    
+    // Uruchom codziennie o 00:00 (północ) - UTC (bez timezone)
+    // cron.schedule('0 0 * * *', async () => {
+    //   console.log("⏰ Daily cron job triggered - updating featured anime");
+    //   try {
+    //     await setFeaturedAnime();
+    //   } catch (err) {
+    //     console.error("❌ Error in daily cron job:", err);
+    //   }
+    // });
 
-    console.log("✅ Scheduler initialized - featured anime will update daily at 00:00 (Warsaw time)");
+    console.log("✅ Scheduler initialized - featured anime check only");
   } catch (error) {
     console.error("❌ Error initializing scheduler:", error);
     throw error;
